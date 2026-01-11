@@ -1,51 +1,42 @@
+React Auth Context API Implementation
+1. File Structure
+Plaintext
+
 src/
  ├─ context/
- │   └─ AuthContext.jsx
+ │  └─ AuthContext.jsx
  ├─ services/
- │   └─ api.js
+ │  └─ api.js
  ├─ components/
- │   ├─ Navbar.jsx
- │   ├─ Dashboard.jsx
- │   └─ Profile.jsx
+ │  ├─ Navbar.jsx
+ │  ├─ Dashboard.jsx
+ │  └─ Profile.jsx
  └─ App.jsx
+ 
+2. Code Implementation
 
- ----------------------------------- AuthContext.jsx ---------------------------------------------------------
+---------------------------------------------------------------------------------
+
+context/AuthContext.jsx
+JavaScript
 
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
-// import { getCurrentUser } from "../services/api";
 
-/**
- * Create Auth Context
- * This will hold global authentication state
- */
 const AuthContext = createContext(null);
 
-/**
- * Axios instance (can be moved to a separate api.js file)
- */
 const api = axios.create({
   baseURL: "https://api.example.com",
   withCredentials: true,
 });
 
-/**
- * Auth Provider
- * - Fetches logged-in user from API
- * - Stores user globally
- * - Exposes auth state to entire app
- */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /**
-   * Fetch current logged-in user
-   */
   const fetchUser = async () => {
     try {
       const res = await api.get("/api/me");
-      // const res = await getCurrentUser();
       setUser(res.data);
     } catch (error) {
       setUser(null);
@@ -54,25 +45,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Run once when app loads
-   */
   useEffect(() => {
     fetchUser();
   }, []);
 
-  /**
-   * Login handler
-   */
   const login = async (credentials) => {
     const res = await api.post("/api/login", credentials);
     setUser(res.data.user);
     return res;
   };
 
-  /**
-   * Logout handler
-   */
   const logout = async () => {
     await api.post("/api/logout");
     setUser(null);
@@ -93,10 +75,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-/**
- * Custom Hook
- * Enforces usage inside AuthProvider
- */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -105,13 +83,10 @@ export const useAuth = () => {
   return context;
 };
 
+--------------------------------------------------------------------
 
-
-
-
-
-------------------------------------------- App.jsx ------------------------------------------------
-
+App.jsx
+JavaScript
 
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
@@ -128,8 +103,10 @@ function App() {
 
 export default App;
 
+-----------------------------------------------------------------------------
 
--------------------------------------------- Navbar.jsx ------------------------------------------
+components/Navbar.jsx
+JavaScript
 
 import { useAuth } from "../context/AuthContext";
 
@@ -138,19 +115,28 @@ const Navbar = () => {
 
   if (loading) return <p>Loading...</p>;
 
-  return <h3>Welcome, {user?.name}</h3>;
+  return (
+    <nav>
+      <h3>Welcome, {user ? user.name : "Guest"}</h3>
+    </nav>
+  );
 };
 
 export default Navbar;
+Interview Definitions
+If an interviewer asks how you handle authentication in React, use these definitions:
 
+1. What is React Context API?
+"The Context API is a built-in React feature used to manage Global State. It allows us to pass data (like user info or themes) through the component tree without having to pass props down manually at every level (Prop Drilling)."
 
+2. Why use a Custom Hook (useAuth)?
+"A custom hook abstracts the useContext logic. It makes the code cleaner and more readable. It also allows us to add safety checks, like throwing an error if a developer tries to use the auth state outside of the AuthProvider."
 
+3. Why use a loading state in Auth Context?
+"The loading state is crucial for User Experience (UX). When the app first loads, we need to check if a user session exists (via an API call). Without a loading state, the UI might flicker or briefly show the 'Logged Out' view before the API responds."
 
+4. What is withCredentials: true in Axios?
+"This setting is required when using Cookies for authentication. It tells the browser to include the session cookie in every cross-site request, allowing the server to recognize the user."
 
-
-
-
-
-
-
-
+5. What is Prop Drilling?
+"Prop Drilling is the process of passing data from a parent component to a deeply nested child component through several middle components that don't actually need the data. Context API solves this by providing a direct 'teleportation' of data to any component."
